@@ -108,7 +108,7 @@ if st.session_state['df_ex']:
         st.subheader('alredy downloaded all files')
     else:
         i = st.session_state['n_download']
-        name ＝ st.session_state['filename']
+        name = st.session_state['filename']
         st.sidebar.header(f'Wave No{i + 1}')
         with st.sidebar.form(key = 'fft'):
             st.sidebar.slider('test', 0, 1)
