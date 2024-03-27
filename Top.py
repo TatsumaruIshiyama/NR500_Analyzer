@@ -108,6 +108,7 @@ if st.session_state['df_ex']:
         st.subheader('alredy downloaded all files')
     else:
         i = st.session_state['n_download']
+        name ＝ st.session_state['filename']
         st.sidebar.header(f'Wave No{i + 1}')
         with st.sidebar.form(key = 'fft'):
             st.sidebar.slider('test', 0, 1)
@@ -115,7 +116,7 @@ if st.session_state['df_ex']:
         download_btn = st.sidebar.download_button(
             label = 'Download csv',
             data = st.session_state['df_ex'][i].to_csv(index = False).encode('utf-8'),
-            file_name = f'{st.session_state['filename']}_ex{i + 1}.csv',
+            file_name = f'{name}_ex{i + 1}.csv',
             mime = 'text/csv',
             key = 'download'
         )
