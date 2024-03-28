@@ -4,26 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
 import scipy.signal as signal
-#%%
-def read_csv_nr500(data):
-    all_col = pd.read_csv(
-        data,
-        skiprows = 70,
-        nrows = 0,
-        encoding = 'shift jis',
-        engine = 'python'
-    )
-    all_col = all_col.columns.values
-    read_col = list(all_col[2:])
-    df = pd.read_csv(
-        data,
-        skiprows = 70,
-        skipfooter = 3,
-        usecols = read_col,
-        encoding = 'shift jis',
-        engine = 'python'
-    )
-    return df
+import copy
 #%%
 def threshold_input(i):
     threshold = st.slider(
@@ -44,20 +25,11 @@ def binaly(data, threshold, b):
     data_bin = data_bin.astype(dtype = 'int')
     return data_bin
 #%%
-def extract_df(data, col_name, col_st, threshold = 0.3, n_conv = 500):
-    col_name = col_name.split(',')
-
-    df = data.copy()
-    df = df.set_axis(
-        labels = col_name,
-        axis = 'columns'
-    )
-
-    n_data = len(df)
+def extract_df(data, data_st, col_name, threshold = 0.3, n_conv = 500):
+    n_data = len(data_st)
     n_conv = int(n_data / n_conv)
     b = np.ones(n_conv)/n_conv
-    data_st = df.loc[:, col_st].values
-    data_calc = data_st.copy()
+    data_calc = data_st.iloc[:, 0].values
     data_calc = abs(data_calc)
     threshold *= max(data_calc)
 
@@ -73,13 +45,18 @@ def extract_df(data, col_name, col_st, threshold = 0.3, n_conv = 500):
     id_ex_R = np.flip(id_ex_R)
     dfs_ex = []
     for i in range(len(id_ex_L)):
-        df_ex = df.iloc[
-            id_ex_L[i]:id_ex_R[i],
-            :
-        ]
-        df_ex = df_ex.reset_index(drop = True)
+        df_ex = pd.read_csv(
+            copy.copy(data),
+            skiprows = int(70 + id_ex_L[i]),
+            nrows = int(id_ex_R[i] - id_ex_L[i]),
+            usecols = list(range(int(2), int(2 + len(col_name)))),
+            encoding = 'shift jis',
+            engine = 'python'
+        )
+        df_ex = df_ex.set_axis(col_name, axis = 1)
+        df_ex = df_ex.reindex(columns = sorted(col_name))
         dfs_ex.append(df_ex)
-    return dfs_ex, id_ex_L, id_ex_R, df, threshold
+    return dfs_ex, id_ex_L, id_ex_R, threshold
 #%%
 def FFT(data, samplerate):
     N = len(data)
