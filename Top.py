@@ -26,19 +26,12 @@ if read_btn:
         for j in range(len(data)):
             filename = data[j].name.replace('.csv', '')
             st.session_state['filename'].append(filename)
-            df = pd.read_csv(
-                data[j],
-                skiprows = 70,
-                skipfooter = 3,
-                encoding = 'shift jis',
-                engine = 'python'
-            )
+            df = ex.read_csv_nr500(data[j])
             st.subheader(filename)
             st.dataframe(
                 df.head()
             )
             st.session_state['df'].append(df)
-        st.session_state['df_ex'] = []
     else:
         st.text('csvファイルをアップロードしてください')
 
