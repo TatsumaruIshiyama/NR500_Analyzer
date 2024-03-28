@@ -7,13 +7,15 @@ import wave_extractor_NR500 as ex
 data = st.file_uploader('Upload csv', type = 'csv')
 read_btn = st.button('Read')
 if 'df' not in st.session_state:
-    st.session_state['df'] = pd.DataFrame()
+    st.session_state['df'] = False
 if 'df_ex' not in st.session_state:
-    st.session_state['df_ex'] = []
+    st.session_state['df_ex'] = False
 if 'n_download' not in st.session_state:
-    st.session_state['n_download'] = 0
+    st.session_state['n_download'] = False
 if 'filename' not in st.session_state:
-    st.session_state['filename'] = ''
+    st.session_state['filename'] = False
+if 'sampling_rate' not in st.session_state:
+    st.session_state['sampling_rate'] = False
 
 if read_btn:
     st.session_state['df'] = pd.DataFrame()
