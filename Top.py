@@ -7,13 +7,13 @@ import wave_extractor_NR500 as ex
 import copy
 # %%
 if 'data_origin' not in st.session_state:
-    st.session_state['data_origin'] = False
+    st.session_state['data_origin'] = []
 if 'df_ex' not in st.session_state:
-    st.session_state['df_ex'] = False
+    st.session_state['df_ex'] = []
 if 'filename' not in st.session_state:
-    st.session_state['filename'] = False
+    st.session_state['filename'] = []
 if 'sampling_rate' not in st.session_state:
-    st.session_state['sampling_rate'] = False
+    st.session_state['sampling_rate'] = 0
 
 st.title('NR500 Analyzer')
 st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
