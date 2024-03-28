@@ -125,4 +125,3 @@ if st.session_state['df_ex']:
             mime = 'text/csv',
             key = 'download'
         )
-print('test')
