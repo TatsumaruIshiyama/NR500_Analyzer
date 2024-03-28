@@ -17,25 +17,10 @@ if 'sampling_rate' not in st.session_state:
 
 st.title('NR500 Analyzer')
 st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
-print(st.session_state['data_origin'])
-
-
-# if read_btn:
-#     st.session_state['df'] = []
-#     st.session_state['df_ex'] = []
-#     st.session_state['filename'] = []
-
-#     if data:
-#         for j in range(len(data)):
-
-#             df = ex.read_csv_nr500(data[j])
-#             st.subheader(filename)
-#             st.dataframe(
-#                 df.head()
-#             )
-#             st.session_state['df'].append(df)
-#     else:
-#         st.text('csvファイルをアップロードしてください')
+data_origin = st.session_state['data_origin']
+for j in range(len(data_origin)):
+    filename = data_origin[j].name.replace('.csv', '')
+    st.session_state['filename'].append(filename)
 
 with st.form('upload'):
     st.session_state['sampling_rate'] = st.slider(
@@ -73,13 +58,10 @@ if extract_btn:
     st.session_state['df_ex'] = []
     st.session_state['filename'] = []
 
-    data_origin = st.session_state['data_origin']
     col_name = col_name.split(',')
     n_st_col = col_name.index(col_st)
     st.session_state['df_ex'] = []
     for j in range(len(data_origin)):
-        filename = data_origin[j].name.replace('.csv', '')
-        st.session_state['filename'].append(filename)
         df_st = pd.read_csv(
             copy.copy(data_origin[j]),
             skiprows = 70,

@@ -6,9 +6,9 @@ import streamlit as st
 import scipy.signal as signal
 import copy
 #%%
-def threshold_input(i):
+def threshold_input(i, filename):
     threshold = st.slider(
-        label = 'Threshold',
+        label = f'Threshold {filename}',
         min_value = float(0),
         max_value = float(1),
         step = 0.02,
