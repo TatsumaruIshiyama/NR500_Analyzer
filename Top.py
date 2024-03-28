@@ -42,7 +42,7 @@ with st.form('upload'):
     )
     threshold = []
     for j in range(len(st.session_state['data_origin'])):
-        threshold_j = ex.threshold_input(j)
+        threshold_j = ex.threshold_input(j, st.session_state['filename'][j])
         threshold.append(threshold_j)
     n_conv = st.number_input(
         label = 'Sensitivity',
