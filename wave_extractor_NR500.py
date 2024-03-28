@@ -5,6 +5,17 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import scipy.signal as signal
 #%%
+def threshold_input(i):
+    threshold = st.slider(
+        label = 'Threshold',
+        min_value = float(0),
+        max_value = float(1),
+        step = 0.02,
+        value = 0.3,
+        key = f'threshold{i + 1}'
+    )
+    return threshold
+#%%
 def binaly(data, threshold, b):
     data_bin = np.where(data < threshold, 0, data)
     data_bin = np.where(threshold <= data, 1, data_bin)
