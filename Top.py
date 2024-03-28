@@ -1,42 +1,44 @@
 #%%
+import numpy as np
 import pandas as pd
 import streamlit as st
 import matplotlib.pyplot as plt
 import wave_extractor_NR500 as ex
 # %%
 st.title('NR500 Analyzer')
-data = st.file_uploader('Upload csv', type = 'csv')
+data = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
 read_btn = st.button('Read')
 if 'df' not in st.session_state:
     st.session_state['df'] = False
 if 'df_ex' not in st.session_state:
     st.session_state['df_ex'] = False
-if 'n_download' not in st.session_state:
-    st.session_state['n_download'] = False
 if 'filename' not in st.session_state:
     st.session_state['filename'] = False
 if 'sampling_rate' not in st.session_state:
     st.session_state['sampling_rate'] = False
 
 if read_btn:
-    st.session_state['df'] = pd.DataFrame()
+    st.session_state['df'] = []
     st.session_state['df_ex'] = []
-    st.session_state['n_download'] = 0
-    st.session_state['filename'] = data.name.replace('.csv', '')
+    st.session_state['filename'] = []
 
     if data:
-        st.session_state['df'] = pd.read_csv(
-            data,
-            skiprows = 70,
-            skipfooter = 3,
-            encoding = 'shift jis',
-            engine = 'python'
-        )
+        for j in range(len(data)):
+            filename = data[j].name.replace('.csv', '')
+            st.session_state['filename'].append(filename)
+            df = pd.read_csv(
+                data[j],
+                skiprows = 70,
+                skipfooter = 3,
+                encoding = 'shift jis',
+                engine = 'python'
+            )
+            st.subheader(filename)
+            st.dataframe(
+                df.head()
+            )
+            st.session_state['df'].append(df)
         st.session_state['df_ex'] = []
-        st.session_state['n_download'] = 0
-        st.dataframe(
-            st.session_state['df'].head()
-        )
     else:
         st.text('csvファイルをアップロードしてください')
 
@@ -58,139 +60,142 @@ with st.form('upload'):
         help = '基準にする列名を入力',
         value = 'acc_X'
     )
-    threshold = st.slider(
-        label = 'Threshold',
-        min_value = float(0),
-        max_value = float(1),
-        step = 0.05,
-        value = 0.3
-    )
+    threshold = []
+    for j in range(len(data)):
+        threshold_j = ex.threshold_input(j)
+        threshold.append(threshold_j)
     n_conv = st.number_input(
         label = 'Sensitivity',
-        min_value = 10,
-        step = 10,
-        value = 500
+        min_value = int(10),
+        step = int(10),
+        value = int(500)
     )
-    n_conv = int(n_conv)
     extract_btn = st.form_submit_button(
         label = 'Extract'
     )
 
 if extract_btn:
-    st.session_state['n_download'] = 0
-    st.session_state['df_ex'], id_L, id_R, df_plot, threshold_plot = ex.extract_df(
-        st.session_state['df'].copy(),
-        col_name,
-        col_st,
-        threshold,
-        n_conv
-    )
-
-    fig, ax = plt.subplots()
-    ax.plot(
-        df_plot.index,
-        df_plot[col_st],
-        c = 'black'
+    st.session_state['df_ex'] = []
+    for j in range(len(data)):
+        df_ex, id_L, id_R, df_plot, threshold_plot = ex.extract_df(
+            st.session_state['df'][j].copy(),
+            col_name,
+            col_st,
+            threshold[j],
+            n_conv
         )
-    ax.hlines(
-        y = threshold_plot,
-        xmin = 0,
-        xmax = df_plot.index[-1],
-        color = 'red'
-    )
-    for i in range(len(st.session_state['df_ex'])):
-        ax.plot(list(range(id_L[i], id_R[i])), st.session_state['df_ex'][i][col_st])
-    st.pyplot(fig)
+
+        fig, ax = plt.subplots()
+        ax.plot(
+            df_plot.index,
+            df_plot[col_st],
+            c = 'black'
+            )
+        ax.hlines(
+            y = threshold_plot,
+            xmin = 0,
+            xmax = df_plot.index[-1],
+            color = 'red'
+        )
+        for i in range(len(df_ex)):
+            ax.plot(list(range(id_L[i], id_R[i])),
+                    df_ex[i][col_st])
+            ax.set_title(st.session_state['filename'][j])
+        st.pyplot(fig)
+        st.session_state['df_ex'].append(df_ex)
 
 if st.session_state['df_ex']:
-    if st.session_state['n_download'] == len(st.session_state['df_ex']):
-        st.session_state['df'] = False
-        st.session_state['df_ex'] = False
-        st.session_state['n_download'] = False
-        st.subheader('alredy downloaded all files')
-    else:
-        next_btn = st.sidebar.button('Next Wave')
-        if next_btn:
-            st.session_state['n_download'] += 1
-        i = st.session_state['n_download']
-        name = st.session_state['filename']
-        st.sidebar.header(f'Wave No{i + 1}')
-        download_btn = st.sidebar.download_button(
-            label = 'Download csv',
-            data = st.session_state['df_ex'][i].to_csv(index = False).encode('utf-8'),
-            file_name = f'{name}_ex{i + 1}.csv',
-            mime = 'text/csv',
-            key = 'download'
-        )
-        data = st.session_state['df_ex'][i]
+    n_data = st.sidebar.selectbox(
+        'Select data',
+        st.session_state['filename']
+    )
+    n_data = st.session_state['filename'].index(n_data)
+    n_wave = np.array(range(len(st.session_state['df_ex'][n_data]))) + 1
+    n_wave = st.sidebar.selectbox(
+        'Select wave No',
+        n_wave
+    )
+    n_wave -= 1
 
-        st.sidebar.subheader('・Show Wave')
-        axis_wave = st.sidebar.multiselect(
-            'Select axis',
-            options = data.columns.values,
-            key = 'show_wave'
-        )
-        show_wave_btn = st.sidebar.button('Show Wave')
-        if show_wave_btn:
-            ex.show_wave(data, st.session_state['sampling_rate'], axis_wave)
-        
-        st.sidebar.subheader('・FFT')
-        axis_fft = st.sidebar.multiselect(
-            'Select axis',
-            options = data.columns.values,
-            key = 'FFT'
-        )
-        peak = st.sidebar.radio('Show peak', [True, False], horizontal = True)
-        peak_sense = st.sidebar.number_input(
-            'sensitivity',
-            0,
-            100,
-            value = 10
-        )
-        fft_btn = st.sidebar.button('FFT')
-        if fft_btn:
-            ex.show_FFT(data, st.session_state['sampling_rate'], axis_fft, peak, peak_sense)
-        
-        st.sidebar.subheader('・Filter')
-        axis_filter = st.sidebar.selectbox(
-            'Select axis',
-            options = data.columns.values,
-            key = 'filter'
-        )
-        type = st.sidebar.radio(
-            'Select type',
-            ['low', 'high', 'band'],
-            horizontal = True
-        )
-        pass_value = int(st.session_state['sampling_rate'] / 4)
-        if type == 'band':
-            pass_value = [pass_value - 500, pass_value + 500]
-        fp = st.sidebar.slider(
-            'Pass frequency',
-            min_value = int(0),
-            max_value = int(st.session_state['sampling_rate'] / 2),
-            value = pass_value,
-            step = int(100),
-            help = '通過域端周波数'
-        )
-        fs = st.sidebar.slider(
-        'Stop frequency',
+    name = f'{st.session_state['filename'][n_data]}_ex{n_wave + 1}'
+    st.sidebar.header(f'Wave No. {st.session_state['filename'][n_data]}-{n_wave + 1}')
+    download_btn = st.sidebar.download_button(
+        label = 'Download csv',
+        data = st.session_state['df_ex'][n_data][n_wave].to_csv(index = False).encode('utf-8'),
+        file_name = f'{name}.csv',
+        mime = 'text/csv',
+        key = 'download'
+    )
+
+    data = st.session_state['df_ex'][n_data][n_wave]
+
+    st.sidebar.subheader('・Show Wave')
+    axis_wave = st.sidebar.multiselect(
+        'Select axis',
+        options = data.columns.values,
+        key = 'show_wave'
+    )
+    show_wave_btn = st.sidebar.button('Show Wave')
+    if show_wave_btn:
+        ex.show_wave(data, st.session_state['sampling_rate'], axis_wave)
+    
+    st.sidebar.subheader('・FFT')
+    axis_fft = st.sidebar.multiselect(
+        'Select axis',
+        options = data.columns.values,
+        key = 'FFT'
+    )
+    peak = st.sidebar.radio('Show peak', [True, False], horizontal = True)
+    peak_sense = st.sidebar.number_input(
+        'sensitivity',
+        0,
+        100,
+        value = 10
+    )
+    fft_btn = st.sidebar.button('FFT')
+    if fft_btn:
+        ex.show_FFT(data, st.session_state['sampling_rate'], axis_fft, peak, peak_sense)
+    
+    st.sidebar.subheader('・Filter')
+    axis_filter = st.sidebar.selectbox(
+        'Select axis',
+        options = data.columns.values,
+        key = 'filter'
+    )
+    type = st.sidebar.radio(
+        'Select type',
+        ['low', 'high', 'band'],
+        horizontal = True
+    )
+    pass_value = int(st.session_state['sampling_rate'] / 4)
+    if type == 'band':
+        pass_value = [pass_value - 500, pass_value + 500]
+    fp = st.sidebar.slider(
+        'Pass frequency',
         min_value = int(0),
         max_value = int(st.session_state['sampling_rate'] / 2),
         value = pass_value,
         step = int(100),
-        help = '阻止域端周波数'
+        help = '通過域端周波数'
+    )
+    fs = st.sidebar.slider(
+    'Stop frequency',
+    min_value = int(0),
+    max_value = int(st.session_state['sampling_rate'] / 2),
+    value = pass_value,
+    step = int(100),
+    help = '阻止域端周波数'
+    )
+    filt_btn = st.sidebar.button('Filter')
+    if filt_btn:
+        data_filt = ex.filter(data[axis_filter],
+                                st.session_state['sampling_rate'],
+                                type,
+                                fp,
+                                fs
         )
-        filt_btn = st.sidebar.button('Filter')
-        if filt_btn:
-            data_filt = ex.filter(data[axis_filter],
-                                  st.session_state['sampling_rate'],
-                                  type,
-                                  fp,
-                                  fs
-            )
-            ex.show_filter(data,
-                           data_filt,
-                           st.session_state['sampling_rate'],
-                           axis_filter
-            )
+        ex.show_filter(data,
+                        data_filt,
+                        st.session_state['sampling_rate'],
+                        axis_filter
+        )
