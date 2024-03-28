@@ -107,6 +107,9 @@ if st.session_state['df_ex']:
         st.session_state['n_download'] = 0
         st.subheader('alredy downloaded all files')
     else:
+        next_btn = st.sidebar.button('Next')
+        if next_btn:
+            st.session_state['n_download'] += 1
         i = st.session_state['n_download']
         name = st.session_state['filename']
         st.sidebar.header(f'Wave No{i + 1}')
@@ -120,7 +123,3 @@ if st.session_state['df_ex']:
             mime = 'text/csv',
             key = 'download'
         )
-        next_btn = st.sidebar.button('Next')
-        if next_btn:
-            print(i)
-            st.session_state['n_download'] += 1
