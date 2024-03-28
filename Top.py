@@ -4,6 +4,7 @@ import streamlit as st
 import matplotlib.pyplot as plt
 import wave_extractor_NR500 as ex
 # %%
+st.title('NR500 Analyzer')
 data = st.file_uploader('Upload csv', type = 'csv')
 read_btn = st.button('Read')
 if 'df' not in st.session_state:
