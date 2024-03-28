@@ -48,12 +48,6 @@ def extract_df(data, col_name, col_st, threshold = 0.3, n_conv = 500):
     col_name = col_name.split(',')
 
     df = data.copy()
-    df = df.drop(
-        columns = [
-            '#EndHeader',
-            '日時(μs)'
-        ]
-    )
     df = df.set_axis(
         labels = col_name,
         axis = 'columns'
