@@ -66,6 +66,21 @@ def FFT(data, samplerate):
     freq = freq[1:int(N / 2)]
     return freq, amp
 # %%
+def filter(data, sample_rate, type, fp, fs, gpass = 3, gstop = 40):
+    if type == 'band':
+        fp = np.array(fp)
+        fs = np.array(fs)
+
+    fn = sample_rate / 2
+
+    wp = fp / fn
+    ws = fs / fn
+    N, Wn = signal.buttord(wp, ws, gpass, gstop)
+    b, a = signal.butter(N, Wn, type)
+
+    data_filt = signal.filtfilt(b, a, data)    
+    return data_filt
+# %%
 def plot_format(ax, xlim, ylim, fontsize = 15, flame_width = 1.5, scale_length = 5, pad = [0, 0], grid_width = 0.5):
     ax.spines["top"].set_linewidth(flame_width)
     ax.spines["left"].set_linewidth(flame_width)
@@ -157,3 +172,58 @@ def show_FFT(data, sampling_rate, axis, peak, sensitivity):
         if peak:
             show_peak(ax, freq, amp, sampling_rate, sensitivity, ylim)
         st.pyplot(fig)
+def show_filter(data, data_filt, sampling_rate, axis):
+    time = (data.index / sampling_rate)
+    xlim = time[-1]
+    ylim = max(abs(data[axis])) * 1.1
+    fig, ax = plt.subplots()
+    ax.plot(time, data[axis], c = 'k')
+    plot_format(
+    ax,
+    xlim = [0, xlim],
+    ylim = [-ylim, ylim],
+    pad = [3, 3]
+    )
+    ax.set_title('origin')
+    st.pyplot(fig)
+    fig, ax = plt.subplots()
+    ax.plot(time, data_filt, c = 'k')
+    plot_format(
+    ax,
+    xlim = [0, xlim],
+    ylim = [-ylim, ylim],
+    pad = [3, 3]
+    )
+    ax.set_title('filter')
+    st.pyplot(fig)
+    freq, amp = FFT(data[axis], sampling_rate)
+    ylim = max(amp) * 1.1
+    fig, ax = plt.subplots(figsize = (8, 3))
+    ax.plot(
+        freq,
+        amp,
+        c = 'k'
+    )
+    plot_format(
+        ax,
+        xlim = [0, int(sampling_rate / 2e3)],
+        ylim = [0, ylim],
+        pad = [3, 3]
+    )
+    ax.set_title('FFT origin')
+    st.pyplot(fig)
+    freq_filt, amp_filt = FFT(data_filt, sampling_rate)
+    fig, ax = plt.subplots(figsize = (8, 3))
+    ax.plot(
+        freq_filt,
+        amp_filt,
+        c = 'k'
+    )
+    plot_format(
+        ax,
+        xlim = [0, int(sampling_rate / 2e3)],
+        ylim = [0, ylim],
+        pad = [3, 3]
+    )
+    ax.set_title('FFT filt')
+    st.pyplot(fig)

@@ -123,22 +123,24 @@ if st.session_state['df_ex']:
             key = 'download'
         )
         data = st.session_state['df_ex'][i]
+
         st.sidebar.subheader('・Show Wave')
-        axis = st.sidebar.multiselect(
+        axis_wave = st.sidebar.multiselect(
             'Select axis',
             options = data.columns.values,
             key = 'show_wave'
         )
         show_wave_btn = st.sidebar.button('Show Wave')
         if show_wave_btn:
-            ex.show_wave(data, st.session_state['sampling_rate'], axis)
+            ex.show_wave(data, st.session_state['sampling_rate'], axis_wave)
+        
         st.sidebar.subheader('・FFT')
-        axis = st.sidebar.multiselect(
+        axis_fft = st.sidebar.multiselect(
             'Select axis',
             options = data.columns.values,
             key = 'FFT'
         )
-        peak = True
+        peak = st.sidebar.radio('Show peak', [True, False], horizontal = True)
         peak_sense = st.sidebar.number_input(
             'sensitivity',
             0,
@@ -147,4 +149,48 @@ if st.session_state['df_ex']:
         )
         fft_btn = st.sidebar.button('FFT')
         if fft_btn:
-            ex.show_FFT(data, st.session_state['sampling_rate'], axis, peak, peak_sense)
+            ex.show_FFT(data, st.session_state['sampling_rate'], axis_fft, peak, peak_sense)
+        
+        st.sidebar.subheader('・Filter')
+        axis_filter = st.sidebar.selectbox(
+            'Select axis',
+            options = data.columns.values,
+            key = 'filter'
+        )
+        type = st.sidebar.radio(
+            'Select type',
+            ['low', 'high', 'band'],
+            horizontal = True
+        )
+        pass_value = int(st.session_state['sampling_rate'] / 4)
+        if type == 'band':
+            pass_value = [pass_value - 500, pass_value + 500]
+        fp = st.sidebar.slider(
+            'Pass frequency',
+            min_value = int(0),
+            max_value = int(st.session_state['sampling_rate'] / 2),
+            value = pass_value,
+            step = int(100),
+            help = '通過域端周波数'
+        )
+        fs = st.sidebar.slider(
+        'Stop frequency',
+        min_value = int(0),
+        max_value = int(st.session_state['sampling_rate'] / 2),
+        value = pass_value,
+        step = int(100),
+        help = '阻止域端周波数'
+        )
+        filt_btn = st.sidebar.button('Filter')
+        if filt_btn:
+            data_filt = ex.filter(data[axis_filter],
+                                  st.session_state['sampling_rate'],
+                                  type,
+                                  fp,
+                                  fs
+            )
+            ex.show_filter(data,
+                           data_filt,
+                           st.session_state['sampling_rate'],
+                           axis_filter
+            )
