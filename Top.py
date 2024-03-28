@@ -117,9 +117,9 @@ if st.session_state['df_ex']:
     )
     n_wave -= 1
 
-    name = st.session_state['filename'][n_data]
-    name = f'{name}_ex{n_wave + 1}'
-    st.sidebar.header(f'Wave No. {st.session_state['filename'][n_data]}-{n_wave + 1}')
+    data_name = st.session_state['filename'][n_data]
+    name = f'{data_name}_ex{n_wave + 1}'
+    st.sidebar.header(f'Wave No. {data_name}-{n_wave + 1}')
     download_btn = st.sidebar.download_button(
         label = 'Download csv',
         data = st.session_state['df_ex'][n_data][n_wave].to_csv(index = False).encode('utf-8'),
