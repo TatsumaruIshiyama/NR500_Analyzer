@@ -18,9 +18,6 @@ if 'sampling_rate' not in st.session_state:
 st.title('NR500 Analyzer')
 st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
 data_origin = st.session_state['data_origin']
-for j in range(len(data_origin)):
-    filename = data_origin[j].name.replace('.csv', '')
-    st.session_state['filename'].append(filename)
 
 with st.form('upload'):
     st.session_state['sampling_rate'] = st.slider(
@@ -42,7 +39,7 @@ with st.form('upload'):
     )
     threshold = []
     for j in range(len(st.session_state['data_origin'])):
-        threshold_j = ex.threshold_input(j, st.session_state['filename'][j])
+        threshold_j = ex.threshold_input(j, data_origin[j].name)
         threshold.append(threshold_j)
     n_conv = st.number_input(
         label = 'Sensitivity',
@@ -55,13 +52,13 @@ with st.form('upload'):
     )
 
 if extract_btn:
-    st.session_state['df_ex'] = []
     st.session_state['filename'] = []
-
     col_name = col_name.split(',')
     n_st_col = col_name.index(col_st)
     st.session_state['df_ex'] = []
     for j in range(len(data_origin)):
+        filename = data_origin[j].name.replace('.csv', '')
+        st.session_state['filename'].append(filename)   
         df_st = pd.read_csv(
             copy.copy(data_origin[j]),
             skiprows = 70,
