@@ -55,6 +55,3 @@ def extract_df(data, sampling_rate, col_name, col_st, threshold = 0.3, n_conv = 
         # df_ex['time'] = df_ex.index.values * sampling_time
         dfs_ex.append(df_ex)
     return dfs_ex, id_ex_L, id_ex_R, df, threshold
-# %%
-print('hello')
-# %%
