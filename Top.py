@@ -40,7 +40,7 @@ if read_btn:
         st.text('csvファイルをアップロードしてください')
 
 with st.form('upload'):
-    sampling_rate = st.slider(
+    st.session_state['sampling_rate'] = st.slider(
             label = 'Sampling Rate',
             min_value = int(0),
             max_value = int(100e3),
@@ -79,7 +79,6 @@ if extract_btn:
     st.session_state['n_download'] = 0
     st.session_state['df_ex'], id_L, id_R, df_plot, threshold_plot = ex.extract_df(
         st.session_state['df'].copy(),
-        sampling_rate,
         col_name,
         col_st,
         threshold,
@@ -104,20 +103,17 @@ if extract_btn:
 
 if st.session_state['df_ex']:
     if st.session_state['n_download'] == len(st.session_state['df_ex']):
-        st.session_state['df'] = pd.DataFrame()
-        st.session_state['df_ex'] = []
-        st.session_state['n_download'] = 0
+        st.session_state['df'] = False
+        st.session_state['df_ex'] = False
+        st.session_state['n_download'] = False
         st.subheader('alredy downloaded all files')
     else:
-        next_btn = st.sidebar.button('Next')
+        next_btn = st.sidebar.button('Next Wave')
         if next_btn:
             st.session_state['n_download'] += 1
         i = st.session_state['n_download']
         name = st.session_state['filename']
         st.sidebar.header(f'Wave No{i + 1}')
-        with st.sidebar.form(key = 'fft'):
-            st.sidebar.slider('test', 0, 1)
-            st.sidebar.button('FFT')
         download_btn = st.sidebar.download_button(
             label = 'Download csv',
             data = st.session_state['df_ex'][i].to_csv(index = False).encode('utf-8'),
@@ -125,3 +121,12 @@ if st.session_state['df_ex']:
             mime = 'text/csv',
             key = 'download'
         )
+        data = st.session_state['df_ex'][i]
+        st.sidebar.subheader('・Show Wave')
+        axis = st.sidebar.multiselect(
+            'Select axis',
+            options = data.columns.values
+        )
+        show_wave_btn = st.sidebar.button('Show Wave')
+        if show_wave_btn:
+            ex.show_wave(data, st.session_state['sampling_rate'], axis)

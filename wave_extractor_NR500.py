@@ -2,6 +2,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import streamlit as st
 #%%
 def binaly(data, threshold, b):
     data_bin = np.where(data < threshold, 0, data)
@@ -11,8 +12,7 @@ def binaly(data, threshold, b):
     data_bin = data_bin.astype(dtype = 'int')
     return data_bin
 #%%
-def extract_df(data, sampling_rate, col_name, col_st, threshold = 0.3, n_conv = 500):
-    sampling_time = 1 / sampling_rate
+def extract_df(data, col_name, col_st, threshold = 0.3, n_conv = 500):
     col_name = col_name.split(',')
 
     df = data.copy()
@@ -52,6 +52,68 @@ def extract_df(data, sampling_rate, col_name, col_st, threshold = 0.3, n_conv = 
             :
         ]
         df_ex = df_ex.reset_index(drop = True)
-        # df_ex['time'] = df_ex.index.values * sampling_time
         dfs_ex.append(df_ex)
     return dfs_ex, id_ex_L, id_ex_R, df, threshold
+# %%
+def plot_format(ax, xlim, ylim, fontsize = 15, flame_width = 1.5, scale_length = 5, pad = [0, 0], grid_width = 0.5):
+    ax.spines["top"].set_linewidth(flame_width)
+    ax.spines["left"].set_linewidth(flame_width)
+    ax.spines["bottom"].set_linewidth(flame_width)
+    ax.spines["right"].set_linewidth(flame_width)
+    ax.minorticks_on()
+    ax.tick_params(
+        which = 'major',
+        axis = 'y',
+        direction = 'in',
+        labelsize = fontsize,
+        width = flame_width,
+        length = scale_length,
+        pad = pad[1]
+        )
+    ax.tick_params(
+        which = 'minor',
+        axis = 'y',
+        direction = 'in',
+        width = flame_width,
+        length = scale_length * 0.7
+        )
+    ax.tick_params(
+        which = 'major',
+        axis = 'x',
+        direction = 'in',
+        labelsize = fontsize,
+        width = flame_width,
+        length = scale_length,
+        pad = pad[0]
+        )
+    ax.tick_params(
+        which = 'minor',
+        axis = 'x',
+        direction = 'in',
+        width = flame_width,
+        length = scale_length * 0.7
+        )
+    ax.set_xlim(xlim[0], xlim[1])
+    ax.set_ylim(ylim[0], ylim[1])
+    ax.grid(color = 'black', linewidth = grid_width)
+# %%
+def show_wave(data, sampling_rate, axis):
+    time = data.index * (1 / sampling_rate)
+    xlim = time[-1]
+    for i in range(len(axis)):
+        data_plot = data[axis[i]]
+        ylim = max(abs(data_plot)) * 1.1
+        fig, ax = plt.subplots()   
+        ax.plot(
+            time,
+            data_plot,
+            c = 'black'
+        )
+        plot_format(
+            ax,
+            xlim = [0, xlim],
+            ylim = [-ylim, ylim]
+        )
+        ax.set_title(axis[i])
+        st.pyplot(fig)
+# %%
