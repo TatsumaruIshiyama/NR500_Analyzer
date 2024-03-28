@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import streamlit as st
+import scipy.signal as signal
 #%%
 def binaly(data, threshold, b):
     data_bin = np.where(data < threshold, 0, data)
@@ -54,6 +55,16 @@ def extract_df(data, col_name, col_st, threshold = 0.3, n_conv = 500):
         df_ex = df_ex.reset_index(drop = True)
         dfs_ex.append(df_ex)
     return dfs_ex, id_ex_L, id_ex_R, df, threshold
+#%%
+def FFT(data, samplerate):
+    N = len(data)
+    F = np.fft.fft(data, norm = 'ortho')
+    amp = np.abs(F)
+    amp = amp[1:int(N / 2)]
+    freq = np.fft.fftfreq(N, d = 1 / samplerate)
+    freq = freq / 1e3
+    freq = freq[1:int(N / 2)]
+    return freq, amp
 # %%
 def plot_format(ax, xlim, ylim, fontsize = 15, flame_width = 1.5, scale_length = 5, pad = [0, 0], grid_width = 0.5):
     ax.spines["top"].set_linewidth(flame_width)
@@ -117,3 +128,32 @@ def show_wave(data, sampling_rate, axis):
         ax.set_title(axis[i])
         st.pyplot(fig)
 # %%
+def show_peak(ax, freq, amp, sampling_rate, sensitivity, ymax):
+    text = np.array(np.round(freq, decimals = 2), dtype = '<U')
+    peak_id = signal.find_peaks(amp, distance = sampling_rate / sensitivity)[0]
+    ax.plot(freq, amp, color = 'black')
+    ax.plot(freq[peak_id], amp[peak_id], marker = 'o', color = 'red', linewidth = 0)
+    for i in range(len(peak_id)):
+        ax.text(s = text[peak_id[i]], x = freq[peak_id[i]], y = amp[peak_id[i]] + ymax / 30)
+# %%
+def show_FFT(data, sampling_rate, axis, peak, sensitivity):
+    for i in range(len(axis)):
+        data_fft = data[axis[i]]
+        freq, amp = FFT(data_fft, sampling_rate)
+        ylim = max(amp) * 1.1
+        fig, ax = plt.subplots(figsize = (8, 3))
+        ax.plot(
+            freq,
+            amp,
+            c = 'k'
+        )
+        plot_format(
+            ax,
+            xlim = [0, int(sampling_rate / 2e3)],
+            ylim = [0, ylim],
+            pad = [3, 3]
+        )
+        ax.set_title(axis[i])
+        if peak:
+            show_peak(ax, freq, amp, sampling_rate, sensitivity, ylim)
+        st.pyplot(fig)

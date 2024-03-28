@@ -126,8 +126,25 @@ if st.session_state['df_ex']:
         st.sidebar.subheader('・Show Wave')
         axis = st.sidebar.multiselect(
             'Select axis',
-            options = data.columns.values
+            options = data.columns.values,
+            key = 'show_wave'
         )
         show_wave_btn = st.sidebar.button('Show Wave')
         if show_wave_btn:
             ex.show_wave(data, st.session_state['sampling_rate'], axis)
+        st.sidebar.subheader('・FFT')
+        axis = st.sidebar.multiselect(
+            'Select axis',
+            options = data.columns.values,
+            key = 'FFT'
+        )
+        peak = True
+        peak_sense = st.sidebar.number_input(
+            'sensitivity',
+            0,
+            100,
+            value = 10
+        )
+        fft_btn = st.sidebar.button('FFT')
+        if fft_btn:
+            ex.show_FFT(data, st.session_state['sampling_rate'], axis, peak, peak_sense)
