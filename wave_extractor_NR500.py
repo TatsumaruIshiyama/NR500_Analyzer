@@ -5,6 +5,26 @@ import matplotlib.pyplot as plt
 import streamlit as st
 import scipy.signal as signal
 #%%
+def read_csv_nr500(data):
+    all_col = pd.read_csv(
+        data,
+        skiprows = 70,
+        nrows = 0,
+        encoding = 'shift jis',
+        engine = 'python'
+    )
+    all_col = all_col.columns.values
+    read_col = list(all_col[2:])
+    df = pd.read_csv(
+        data,
+        skiprows = 70,
+        skipfooter = 3,
+        usecols = read_col,
+        encoding = 'shift jis',
+        engine = 'python'
+    )
+    return df
+#%%
 def threshold_input(i):
     threshold = st.slider(
         label = 'Threshold',
