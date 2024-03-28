@@ -214,3 +214,11 @@ if st.session_state['df_ex']:
                         st.session_state['sampling_rate'],
                         axis_filter
         )
+    reset_btn = st.button(
+        label = 'Reset'
+    )
+    if reset_btn:
+        st.session_state['data_origin'] = []
+        st.session_state['df_ex'] = []
+        st.session_state['filename'] = []
+        st.session_state['sampling_rate'] = 0
