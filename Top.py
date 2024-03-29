@@ -92,8 +92,10 @@ if extract_btn:
             mode
         )
         st.session_state['df_ex'].append(df_ex)
+    if mode == 'Extract':
+        st.subheader('Extraction Completed')
         
-if st.session_state['df_ex']:
+if mode == 'Extract' and st.session_state['df_ex']:
     n_data = st.sidebar.selectbox(
         'Select data',
         st.session_state['filename']
@@ -194,14 +196,15 @@ if st.session_state['df_ex']:
                         st.session_state['sampling_rate'],
                         axis_filter
         )
-    reset_btn = st.button(
-        label = 'Reset'
-    )
-    if reset_btn:
-        st.session_state['data_origin'] = []
-        st.session_state['df_st'] = []
-        st.session_state['df_ex'] = []
-        st.session_state['filename'] = []
-        st.session_state['sampling_rate'] = 0
-        st.session_state['col_name'] = []
-        st.session_state['col_st'] = []
+reset_btn = st.button(
+    label = 'Reset'
+)
+if reset_btn:
+    st.session_state['data_origin'] = []
+    st.session_state['df_st'] = []
+    st.session_state['df_ex'] = []
+    st.session_state['filename'] = []
+    st.session_state['sampling_rate'] = 0
+    st.session_state['col_name'] = []
+    st.session_state['col_st'] = []
+    mode = False
