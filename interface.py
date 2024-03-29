@@ -65,6 +65,13 @@ def extract_form(filename, data_origin):
             for i in range(len(data_origin)):
                 threshold_j = threshold_input(i, st.session_state['filename'][i])
                 threshold.append(threshold_j)
+        skip = st.number_input(
+            'Skip',
+            min_value = float(0),
+            max_value = float(1),
+            step = 0.05,
+            value = 0.3
+        )
         n_conv = st.number_input(
             label = 'Sensitivity',
             min_value = int(10),
@@ -72,9 +79,9 @@ def extract_form(filename, data_origin):
             value = int(500)
         )
         extract_btn = st.form_submit_button(label = 'Extract')
-    return mode, threshold, n_conv, extract_btn
+    return mode, threshold, skip, n_conv, extract_btn
 # %%
-def extract(threshold, n_conv, mode):
+def extract(threshold, skip, n_conv, mode):
     df_st = st.session_state['df_st']
     st.session_state['df_ex'] = []
     for i in range(len(df_st)):  
@@ -83,6 +90,7 @@ def extract(threshold, n_conv, mode):
             df_st[i],
             st.session_state['col_name'],
             threshold[i],
+            skip,
             n_conv,
             st.session_state['filename'][i],
             mode
