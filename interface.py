@@ -97,6 +97,7 @@ def extract(threshold, skip, n_conv, mode):
         )
         if mode == 'Extract':
             st.session_state['df_ex'].append(df_ex)
+    st.subheader('Extraction Completed')
     return st.session_state['df_ex']
 # %%
 def select_data():

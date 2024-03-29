@@ -63,7 +63,6 @@ def extract_df(data, data_st, col_name, threshold, skip, n_conv, name, mode):
             df_ex = df_ex.set_axis(col_name, axis = 1)
             df_ex = df_ex.reindex(columns = sorted(col_name))
             dfs_ex.append(df_ex)
-        st.subheader('Extraction Completed')
     if mode == 'Check':
         fig, ax = plt.subplots()
         ax.plot(
