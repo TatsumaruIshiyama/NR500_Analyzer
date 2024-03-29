@@ -201,3 +201,5 @@ if st.session_state['df_ex']:
         st.session_state['df_ex'] = []
         st.session_state['filename'] = []
         st.session_state['sampling_rate'] = 0
+#%%
+print('test')
