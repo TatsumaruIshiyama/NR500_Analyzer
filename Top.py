@@ -25,9 +25,9 @@ st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple
 st.session_state['sampling_rate'], st.session_state['col_name'], st.session_state['col_st'], read_btn = interface.read_form()
 if read_btn:
     st.session_state['filename'], st.session_state['df_st'] = interface.read()
-mode, threshold, n_conv, extract_btn = interface.extract_form(st.session_state['filename'], st.session_state['data_origin'])
+mode, threshold, skip, n_conv, extract_btn = interface.extract_form(st.session_state['filename'], st.session_state['data_origin'])
 if extract_btn:
-    st.session_state['df_ex'] = interface.extract(threshold, n_conv, mode)
+    st.session_state['df_ex'] = interface.extract(threshold, skip, n_conv, mode)
 if mode == 'Extract' and st.session_state['df_ex']:
     data_select, name = interface.select_data()
     analyze_mode = interface.sidebar(data_select, name)

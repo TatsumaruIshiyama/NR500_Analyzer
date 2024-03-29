@@ -27,7 +27,7 @@ def binaly(data, threshold, b):
     data_bin = data_bin.astype(dtype = 'int')
     return data_bin
 #%%
-def extract_df(data, data_st, col_name, threshold, n_conv, name, mode):
+def extract_df(data, data_st, col_name, threshold, skip, n_conv, name, mode):
     n_data = len(data_st)
     n_conv = int(n_data / n_conv)
     b = np.ones(n_conv)/n_conv
@@ -47,21 +47,22 @@ def extract_df(data, data_st, col_name, threshold, n_conv, name, mode):
     id_ex_R = np.flip(id_ex_R)
     len_id = id_ex_R - id_ex_L
     len_max = max(len_id)
+    id_ex_L = np.delete(id_ex_L, np.where(len_id < len_max * skip))
+    id_ex_R = np.delete(id_ex_R, np.where(len_id < len_max * skip))
     dfs_ex = []
     if mode == 'Extract':
         for i in range(len(id_ex_L)):
-            if len_id[i] > len_max * 0.1:
-                df_ex = pd.read_csv(
-                    copy.copy(data),
-                    skiprows = int(70 + id_ex_L[i]),
-                    nrows = int(id_ex_R[i] - id_ex_L[i]),
-                    usecols = list(range(int(2), int(2 + len(col_name)))),
-                    encoding = 'shift jis',
-                    engine = 'python'
-                )
-                df_ex = df_ex.set_axis(col_name, axis = 1)
-                df_ex = df_ex.reindex(columns = sorted(col_name))
-                dfs_ex.append(df_ex)
+            df_ex = pd.read_csv(
+                copy.copy(data),
+                skiprows = int(70 + id_ex_L[i]),
+                nrows = int(id_ex_R[i] - id_ex_L[i]),
+                usecols = list(range(int(2), int(2 + len(col_name)))),
+                encoding = 'shift jis',
+                engine = 'python'
+            )
+            df_ex = df_ex.set_axis(col_name, axis = 1)
+            df_ex = df_ex.reindex(columns = sorted(col_name))
+            dfs_ex.append(df_ex)
         st.subheader('Extraction Completed')
     if mode == 'Check':
         fig, ax = plt.subplots()
