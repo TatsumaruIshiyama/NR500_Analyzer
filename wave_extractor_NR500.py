@@ -45,20 +45,24 @@ def extract_df(data, data_st, col_name, threshold, n_conv, name, mode):
     id_ex_R = np.where(id_ex_R == 1)[0]
     id_ex_R = n_data - id_ex_R
     id_ex_R = np.flip(id_ex_R)
+    len_id = id_ex_R - id_ex_L
+    len_max = max(len_id)
     dfs_ex = []
     if mode == 'Extract':
         for i in range(len(id_ex_L)):
-            df_ex = pd.read_csv(
-                copy.copy(data),
-                skiprows = int(70 + id_ex_L[i]),
-                nrows = int(id_ex_R[i] - id_ex_L[i]),
-                usecols = list(range(int(2), int(2 + len(col_name)))),
-                encoding = 'shift jis',
-                engine = 'python'
-            )
-            df_ex = df_ex.set_axis(col_name, axis = 1)
-            df_ex = df_ex.reindex(columns = sorted(col_name))
-            dfs_ex.append(df_ex)
+            if len_id[i] > len_max * 0.1:
+                df_ex = pd.read_csv(
+                    copy.copy(data),
+                    skiprows = int(70 + id_ex_L[i]),
+                    nrows = int(id_ex_R[i] - id_ex_L[i]),
+                    usecols = list(range(int(2), int(2 + len(col_name)))),
+                    encoding = 'shift jis',
+                    engine = 'python'
+                )
+                df_ex = df_ex.set_axis(col_name, axis = 1)
+                df_ex = df_ex.reindex(columns = sorted(col_name))
+                dfs_ex.append(df_ex)
+        st.subheader('Extraction Completed')
     if mode == 'Check':
         fig, ax = plt.subplots()
         ax.plot(
