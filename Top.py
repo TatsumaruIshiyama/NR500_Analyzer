@@ -8,92 +8,91 @@ import copy
 # %%
 if 'data_origin' not in st.session_state:
     st.session_state['data_origin'] = []
+if 'df_st' not in st.session_state:
+    st.session_state['df_st'] = []
 if 'df_ex' not in st.session_state:
     st.session_state['df_ex'] = []
 if 'filename' not in st.session_state:
     st.session_state['filename'] = []
 if 'sampling_rate' not in st.session_state:
     st.session_state['sampling_rate'] = 0
+if 'col_name' not in st.session_state:
+    st.session_state['col_name'] = []
+if 'col_st' not in st.session_state:
+    st.session_state['col_st'] = []
 
 st.title('NR500 Analyzer')
 st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
-data_origin = st.session_state['data_origin']
 
-with st.form('upload'):
+with st.form('read'):
     st.session_state['sampling_rate'] = st.slider(
-            label = 'Sampling Rate',
-            min_value = int(0),
-            max_value = int(100e3),
-            value = int(100e2),
-            step = int(10e3)
-            )
-    col_name = st.text_input(
-        label = 'Columns Name',
-        value = 'mic,acc_Z,acc_X,acc_Y,curr_Y,curr_spindle,curr_Z,curr_X',
-        help = '列名をカンマ区切りで入力'
+        label = 'Sampling Rate',
+        min_value = int(0),
+        max_value = int(100e3),
+        value = int(100e2),
+        step = int(10e3)
     )
-    col_st = st.text_input(
+    st.session_state['col_name'] = st.text_input(
+    label = 'Columns Name',
+    value = 'mic,acc_Z,acc_X,acc_Y,curr_Y,curr_spindle,curr_Z,curr_X',
+    help = '列名をカンマ区切りで入力'
+    )
+    st.session_state['col_name'] = list(st.session_state['col_name'].split(','))
+    st.session_state['col_st'] = st.text_input(
         label = 'Standard Column',
         help = '基準にする列名を入力',
         value = 'acc_X'
     )
-    threshold = []
+    read_btn = st.form_submit_button('Read')
+if read_btn:
+    st.session_state['filename'] = []
+    for j in range(len(st.session_state['data_origin'])):   
+        filename = st.session_state['data_origin'][j].name.replace('.csv', '')
+        st.session_state['filename'].append(filename)
+        st.session_state['df_st'] = []
     for j in range(len(st.session_state['data_origin'])):
-        threshold_j = ex.threshold_input(j, data_origin[j].name)
-        threshold.append(threshold_j)
+        st.session_state['df_st'].append(
+            ex.read_standard(
+            st.session_state['data_origin'][j],
+            st.session_state['col_name'],
+            st.session_state['col_st']
+            )
+        )
+    st.subheader('Reading Completed')
+
+with st.form('extract'):
+    mode = st.radio('Mode',
+                    ['Check', 'Extract'],
+                    help = 'Checkモードで正確に抽出できていることを確認しExtractモードで抽出を行ってください'
+    )
+    threshold = []
+    if st.session_state['filename']:
+        for j in range(len(st.session_state['data_origin'])):
+            threshold_j = ex.threshold_input(j, st.session_state['filename'][j])
+            threshold.append(threshold_j)
     n_conv = st.number_input(
         label = 'Sensitivity',
         min_value = int(10),
         step = int(10),
         value = int(500)
     )
-    extract_btn = st.form_submit_button(
-        label = 'Extract'
-    )
+    extract_btn = st.form_submit_button(label = 'Extract')
 
 if extract_btn:
-    st.session_state['filename'] = []
-    col_name = col_name.split(',')
-    n_st_col = col_name.index(col_st)
+    df_st = st.session_state['df_st']
     st.session_state['df_ex'] = []
-    for j in range(len(data_origin)):
-        filename = data_origin[j].name.replace('.csv', '')
-        st.session_state['filename'].append(filename)   
-        df_st = pd.read_csv(
-            copy.copy(data_origin[j]),
-            skiprows = 70,
-            skipfooter = 3,
-            usecols = [n_st_col + 2],
-            encoding = 'shift jis',
-            engine = 'python'
-        )
-        df_ex, id_L, id_R, threshold_plot = ex.extract_df(
-            data_origin[j],
-            df_st,
-            col_name,
+    for j in range(len(df_st)):  
+        df_ex = ex.extract_df(
+            st.session_state['data_origin'][j],
+            df_st[j],
+            st.session_state['col_name'],
             threshold[j],
-            n_conv
+            n_conv,
+            st.session_state['filename'][j],
+            mode
         )
-
-        fig, ax = plt.subplots()
-        ax.plot(
-            df_st.index,
-            df_st,
-            c = 'black'
-            )
-        ax.hlines(
-            y = threshold_plot,
-            xmin = 0,
-            xmax = df_st.index[-1],
-            color = 'red'
-        )
-        for i in range(len(df_ex)):
-            ax.plot(list(range(id_L[i], id_R[i])),
-                    df_ex[i][col_st])
-            ax.set_title(filename)
-        st.pyplot(fig)
         st.session_state['df_ex'].append(df_ex)
-
+        
 if st.session_state['df_ex']:
     n_data = st.sidebar.selectbox(
         'Select data',
@@ -110,11 +109,13 @@ if st.session_state['df_ex']:
     data_name = st.session_state['filename'][n_data]
     name = f'{data_name}_ex{n_wave + 1}'
     st.sidebar.header(f'Wave No. {data_name}-{n_wave + 1}')
+
     show_csv_btn = st.sidebar.button(
         'Show csv'
     )
     if show_csv_btn:
         st.dataframe(data.head())
+    
     download_btn = st.sidebar.download_button(
         label = 'Download csv',
         data = data.to_csv(index = False).encode('utf-8'),
@@ -198,8 +199,9 @@ if st.session_state['df_ex']:
     )
     if reset_btn:
         st.session_state['data_origin'] = []
+        st.session_state['df_st'] = []
         st.session_state['df_ex'] = []
         st.session_state['filename'] = []
         st.session_state['sampling_rate'] = 0
-#%%
-print('test')
+        st.session_state['col_name'] = []
+        st.session_state['col_st'] = []
