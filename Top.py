@@ -55,8 +55,6 @@ if st.session_state['data_origin']:
     total = sum(total)
     if total > 550e6:
         st.text('File size is too large')
-    else:
-        st.text('Uploading completed')
 st.session_state['sampling_rate'], st.session_state['col_name'], st.session_state['col_st'], read_btn = interface.read_form()
 if read_btn:
     interface.read()
