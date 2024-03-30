@@ -27,7 +27,7 @@ def binaly(data, threshold, b):
     data_bin = data_bin.astype(dtype = 'int')
     return data_bin
 #%%
-def extract_df(data, data_st, col_name, threshold, skip, n_conv, name, mode):
+def check(data_st, threshold, skip, n_conv, name):
     n_data = len(data_st)
     n_conv = int(n_data / n_conv)
     b = np.ones(n_conv)/n_conv
@@ -49,37 +49,37 @@ def extract_df(data, data_st, col_name, threshold, skip, n_conv, name, mode):
     len_max = max(len_id)
     id_ex_L = np.delete(id_ex_L, np.where(len_id < len_max * skip))
     id_ex_R = np.delete(id_ex_R, np.where(len_id < len_max * skip))
+    fig, ax = plt.subplots()
+    ax.plot(
+        data_st.index,
+        data_st,
+        c = 'black'
+    )
+    ax.hlines(
+        y = threshold,
+        xmin = 0,
+        xmax = data_st.index[-1],
+        color = 'red'
+    )
+    for i in range(len(id_ex_L)):
+        ax.plot(list(range(id_ex_L[i], id_ex_R[i])), data_st.iloc[id_ex_L[i]: id_ex_R[i]])
+        ax.set_title(name)
+    return id_ex_L, id_ex_R, fig
+#%%
+def extract_df(data, col_name, id_ex_L, id_ex_R):
     dfs_ex = []
-    if mode == 'Extract':
-        for i in range(len(id_ex_L)):
-            df_ex = pd.read_csv(
-                copy.copy(data),
-                skiprows = int(70 + id_ex_L[i]),
-                nrows = int(id_ex_R[i] - id_ex_L[i]),
-                usecols = list(range(int(2), int(2 + len(col_name)))),
-                encoding = 'shift jis',
-                engine = 'python'
-            )
-            df_ex = df_ex.set_axis(col_name, axis = 1)
-            df_ex = df_ex.reindex(columns = sorted(col_name))
-            dfs_ex.append(df_ex)
-    if mode == 'Check':
-        fig, ax = plt.subplots()
-        ax.plot(
-            data_st.index,
-            data_st,
-            c = 'black'
+    for i in range(len(id_ex_L)):
+        df_ex = pd.read_csv(
+            copy.copy(data),
+            skiprows = int(70 + id_ex_L[i]),
+            nrows = int(id_ex_R[i] - id_ex_L[i]),
+            usecols = list(range(int(2), int(2 + len(col_name)))),
+            encoding = 'shift jis',
+            engine = 'python'
         )
-        ax.hlines(
-            y = threshold,
-            xmin = 0,
-            xmax = data_st.index[-1],
-            color = 'red'
-        )
-        for i in range(len(id_ex_L)):
-            ax.plot(list(range(id_ex_L[i], id_ex_R[i])), data_st.iloc[id_ex_L[i]: id_ex_R[i]])
-            ax.set_title(name)
-        st.pyplot(fig)
+        df_ex = df_ex.set_axis(col_name, axis = 1)
+        df_ex = df_ex.reindex(columns = sorted(col_name))
+        dfs_ex.append(df_ex)
     return dfs_ex
 #%%
 def FFT(data, samplerate):
