@@ -1,32 +1,86 @@
 # %%
 import numpy as np
-import pandas as pd
 import streamlit as st
 import wave_extractor_NR500 as ex
+# %%
+def def_session_state():
+    if 'data_origin' not in st.session_state:
+        st.session_state['data_origin'] = []
+    if 'df_st' not in st.session_state:
+        st.session_state['df_st'] = []
+    if 'df_ex' not in st.session_state:
+        st.session_state['df_ex'] = []
+    if 'filename' not in st.session_state:
+        st.session_state['filename'] = []
+    if 'sampling_rate' not in st.session_state:
+        st.session_state['sampling_rate'] = 0
+    if 'col_name' not in st.session_state:
+        st.session_state['col_name'] = []
+    if 'col_st' not in st.session_state:
+        st.session_state['col_st'] = []
+    if 'threshold' not in st.session_state:
+        st.session_state['threshold'] = [0.5]
+    if 'skip' not in st.session_state:
+        st.session_state['skip'] = [0.3]
+    if 'sensitivity' not in st.session_state:
+        st.session_state['sensitivity'] = [500]
+    if 'id_L' not in st.session_state:
+        st.session_state['id_L'] = []
+    if 'id_R' not in st.session_state:
+        st.session_state['id_R'] = []
+    if 'analyze' not in st.session_state:
+        st.session_state['analyze'] = False
+# %%
+def reset():
+    st.session_state['data_origin'] = []
+    st.session_state['df_st'] = []
+    st.session_state['df_ex'] = []
+    st.session_state['filename'] = []
+    st.session_state['sampling_rate'] = 0
+    st.session_state['col_name'] = []
+    st.session_state['col_st'] = []
+    st.session_state['threshold'] = [0.5]
+    st.session_state['skip'] = [0.3]
+    st.session_state['sensitivity'] = [500]
+    st.session_state['id_L'] = []
+    st.session_state['id_R'] = []
+    st.session_state['analyze'] = False
+# %%
+def upload():
+    st.subheader('1. Upload csv')
+    st.session_state['data_origin'] = st.file_uploader('Limit 500MB in total', accept_multiple_files = True, type = 'csv')
+    if st.session_state['data_origin']:
+        total = []
+        for data_origin in st.session_state['data_origin']:
+            size = data_origin.size
+            total.append(size)
+        total = sum(total)
+        if total > 550e6:
+            st.text('File size is too large')
 # %%
 def read_form():
     with st.form('read'):
         st.subheader('2. Read csv')
-        sampling_rate = st.slider(
+        st.session_state['sampling_rate'] = st.slider(
             label = 'Sampling Rate',
             min_value = int(0),
             max_value = int(100e3),
             value = int(100e2),
             step = int(10e3)
         )
-        col_name = st.text_input(
+        st.session_state['col_name'] = st.text_input(
         label = 'Columns Name',
         value = 'mic,acc_Z,acc_X,acc_Y,curr_Y,curr_spindle,curr_Z,curr_X',
         help = '列名をカンマ区切りで入力'
         )
-        col_name = list(col_name.split(','))
-        col_st = st.text_input(
+        st.session_state['col_name'] = list(st.session_state['col_name'].split(','))
+        st.session_state['col_st'] = st.text_input(
             label = 'Standard Column',
             help = '基準にする列名を入力',
             value = 'acc_X'
         )
         read_btn = st.form_submit_button('Read')
-    return sampling_rate, col_name, col_st, read_btn
+    return read_btn
 # %%
 def read():
     st.session_state['filename'] = []
@@ -34,6 +88,8 @@ def read():
     st.session_state['threshold'] = [0.5] * len(st.session_state['data_origin'])
     st.session_state['skip'] = [0.3] * len(st.session_state['data_origin'])
     st.session_state['sensitivity'] = [500] * len(st.session_state['data_origin'])
+    st.session_state['id_L'] = [0] * len(st.session_state['data_origin'])
+    st.session_state['id_R'] = [0] * len(st.session_state['data_origin'])
     for i in range(len(st.session_state['data_origin'])):   
         filename = st.session_state['data_origin'][i].name.replace('.csv', '')
         st.session_state['filename'].append(filename)
@@ -84,16 +140,16 @@ def check_form():
     return file_id, check_btn
 # %%
 def check(file_id):
-    ex.extract_df(
-    st.session_state['data_origin'][file_id],
+    id_L, id_R, fig = ex.check(
     st.session_state['df_st'][file_id],
-    st.session_state['col_name'],
     st.session_state['threshold'][file_id],
     st.session_state['skip'][file_id],
     st.session_state['sensitivity'][file_id],
     st.session_state['filename'][file_id],
-    'Check'
     )
+    st.session_state['id_L'][file_id] = id_L
+    st.session_state['id_R'][file_id] = id_R
+    st.pyplot(fig)
 # %%
 def extract_form():
     with st.form('extract'):
@@ -106,13 +162,9 @@ def extract():
     for i in range(len(st.session_state['df_st'])):  
         df_ex = ex.extract_df(
             st.session_state['data_origin'][i],
-            st.session_state['df_st'][i],
             st.session_state['col_name'],
-            st.session_state['threshold'][i],
-            st.session_state['skip'][i],
-            st.session_state['sensitivity'][i],
-            st.session_state['filename'][i],
-            'Extract'
+            st.session_state['id_L'][i],
+            st.session_state['id_R'][i],
         )
         st.session_state['df_ex'].append(df_ex)
     st.text('Extraction Completed')
@@ -135,11 +187,13 @@ def select_data():
     st.sidebar.header(f'Wave No. {data_name}-{n_wave + 1}')
     return data, name
 # %%
-def sidebar(data, name):
+def sidebar():
+    st.sidebar.header('5. Analyzing')
+    data, name = select_data()
     show_csv_btn = st.sidebar.button('Show csv')
     if show_csv_btn:
         st.dataframe(data.head())
-    download_btn = st.sidebar.download_button(
+    st.sidebar.download_button(
     label = 'Download csv',
     data = data.to_csv(index = False).encode('utf-8'),
     file_name = f'{name}.csv',
@@ -147,7 +201,7 @@ def sidebar(data, name):
     key = 'download'
     )
     analyze_mode = st.sidebar.selectbox('Analyze Mode', ['Show Wave', 'FFT', 'Filter'])
-    return analyze_mode
+    return data, analyze_mode
 # %%
 def analyze(data, analyze_mode):
     if analyze_mode == 'Show Wave':
