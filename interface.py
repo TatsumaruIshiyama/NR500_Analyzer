@@ -54,9 +54,9 @@ def upload():
         for data_origin in st.session_state['data_origin']:
             size = data_origin.size
             total.append(size)
-        total = sum(total)
-        if total > 550e6:
-            st.text('File size is too large')
+        total = sum(total) / 1e6
+        total = np.round(total, decimals = 2)
+        st.text(f'Total file size : {total} MB')      
 # %%
 def read_form():
     with st.form('read'):
@@ -66,7 +66,7 @@ def read_form():
             min_value = int(0),
             max_value = int(100e3),
             value = int(100e2),
-            step = int(10e3)
+            step = int(1e3)
         )
         st.session_state['col_name'] = st.text_input(
         label = 'Columns Name',
