@@ -1,11 +1,12 @@
-#%%
+# %%
 import numpy as np
 import pandas as pd
 import streamlit as st
 import wave_extractor_NR500 as ex
-#%%
+# %%
 def read_form():
     with st.form('read'):
+        st.subheader('2. Read csv')
         sampling_rate = st.slider(
             label = 'Sampling Rate',
             min_value = int(0),
@@ -30,6 +31,9 @@ def read_form():
 def read():
     st.session_state['filename'] = []
     st.session_state['df_st'] = []
+    st.session_state['threshold'] = [0.5] * len(st.session_state['data_origin'])
+    st.session_state['skip'] = [0.3] * len(st.session_state['data_origin'])
+    st.session_state['sensitivity'] = [500] * len(st.session_state['data_origin'])
     for i in range(len(st.session_state['data_origin'])):   
         filename = st.session_state['data_origin'][i].name.replace('.csv', '')
         st.session_state['filename'].append(filename)
@@ -40,65 +44,78 @@ def read():
             st.session_state['col_st']
             )
         )
-    st.subheader('Reading Completed')
-    return st.session_state['filename'], st.session_state['df_st']
+    st.text('Reading Completed')
 # %%
-def threshold_input(i, filename):
-    threshold = st.slider(
-        label = f'Threshold {filename}',
-        min_value = float(0),
-        max_value = float(1),
-        step = 0.02,
-        value = 0.3,
-        key = f'threshold{i + 1}'
-    )
-    return threshold
-# %%
-def extract_form(filename, data_origin):
-    with st.form('extract'):
-        mode = st.radio('Mode',
-                        ['Check', 'Extract'],
-                        help = 'Checkモードで正確に抽出できていることを確認しExtractモードで抽出を行ってください'
+def check_form():
+    with st.form('check'):
+        st.subheader('3. Check extraction')
+        file = st.selectbox(
+            'File',
+            st.session_state['filename']
         )
-        threshold = []
-        if filename:
-            for i in range(len(data_origin)):
-                threshold_j = threshold_input(i, st.session_state['filename'][i])
-                threshold.append(threshold_j)
-        skip = st.number_input(
+        threshold = st.slider(
+            label = 'Threshold',
+            min_value = float(0),
+            max_value = float(1),
+            step = 0.02,
+            value = 0.5,
+        )
+        skip = st.slider(
             'Skip',
             min_value = float(0),
             max_value = float(1),
-            step = 0.05,
+            step = 0.02,
             value = 0.3
         )
-        n_conv = st.number_input(
+        n_conv = st.slider(
             label = 'Sensitivity',
-            min_value = int(10),
-            step = int(10),
+            min_value = int(100),
+            max_value = int(2000),
+            step = int(100),
             value = int(500)
         )
-        extract_btn = st.form_submit_button(label = 'Extract')
-    return mode, threshold, skip, n_conv, extract_btn
+        file_id = 0
+        if st.session_state['filename']:
+            file_id = st.session_state['filename'].index(file)
+        st.session_state['threshold'][file_id] = threshold
+        st.session_state['skip'][file_id] = skip
+        st.session_state['sensitivity'][file_id] = n_conv
+        check_btn = st.form_submit_button('Check')
+    return file_id, check_btn
 # %%
-def extract(threshold, skip, n_conv, mode):
-    df_st = st.session_state['df_st']
+def check(file_id):
+    ex.extract_df(
+    st.session_state['data_origin'][file_id],
+    st.session_state['df_st'][file_id],
+    st.session_state['col_name'],
+    st.session_state['threshold'][file_id],
+    st.session_state['skip'][file_id],
+    st.session_state['sensitivity'][file_id],
+    st.session_state['filename'][file_id],
+    'Check'
+    )
+# %%
+def extract_form():
+    with st.form('extract'):
+        st.subheader('4. Extraction')
+        extract_btn = st.form_submit_button(label = 'Extract')
+    return extract_btn
+# %%
+def extract():
     st.session_state['df_ex'] = []
-    for i in range(len(df_st)):  
+    for i in range(len(st.session_state['df_st'])):  
         df_ex = ex.extract_df(
             st.session_state['data_origin'][i],
-            df_st[i],
+            st.session_state['df_st'][i],
             st.session_state['col_name'],
-            threshold[i],
-            skip,
-            n_conv,
+            st.session_state['threshold'][i],
+            st.session_state['skip'][i],
+            st.session_state['sensitivity'][i],
             st.session_state['filename'][i],
-            mode
+            'Extract'
         )
-        if mode == 'Extract':
-            st.session_state['df_ex'].append(df_ex)
-    st.subheader('Extraction Completed')
-    return st.session_state['df_ex']
+        st.session_state['df_ex'].append(df_ex)
+    st.text('Extraction Completed')
 # %%
 def select_data():
     n_data = st.sidebar.selectbox(

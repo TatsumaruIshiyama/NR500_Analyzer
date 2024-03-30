@@ -19,16 +19,30 @@ if 'col_name' not in st.session_state:
     st.session_state['col_name'] = []
 if 'col_st' not in st.session_state:
     st.session_state['col_st'] = []
+if 'threshold' not in st.session_state:
+    st.session_state['threshold'] = [0.5]
+if 'skip' not in st.session_state:
+    st.session_state['skip'] = [0.3]
+if 'sensitivity' not in st.session_state:
+    st.session_state['sensitivity'] = [500]
+if 'analyze' not in st.session_state:
+    st.session_state['analyze'] = False
 
 st.title('NR500 Analyzer')
+st.subheader('1. Upload csv')
 st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
 st.session_state['sampling_rate'], st.session_state['col_name'], st.session_state['col_st'], read_btn = interface.read_form()
 if read_btn:
-    st.session_state['filename'], st.session_state['df_st'] = interface.read()
-mode, threshold, skip, n_conv, extract_btn = interface.extract_form(st.session_state['filename'], st.session_state['data_origin'])
+    interface.read()
+file_id, check_btn = interface.check_form()
+if check_btn:
+    interface.check(file_id)
+extract_btn = interface.extract_form()
 if extract_btn:
-    st.session_state['df_ex'] = interface.extract(threshold, skip, n_conv, mode)
-if mode == 'Extract' and st.session_state['df_ex']:
+    interface.extract()
+    st.session_state['analyze'] = True
+if st.session_state['analyze'] and st.session_state['df_ex']:
+    st.sidebar.header('5. Analyzing')
     data_select, name = interface.select_data()
     analyze_mode = interface.sidebar(data_select, name)
     interface.analyze(data_select, analyze_mode)
@@ -41,4 +55,8 @@ if reset_btn:
     st.session_state['sampling_rate'] = 0
     st.session_state['col_name'] = []
     st.session_state['col_st'] = []
+    st.session_state['threshold'] = [0.5]
+    st.session_state['skip'] = [0.3]
+    st.session_state['sensitivity'] = [500]
+    st.session_state['analyze'] = False
     mode = False
