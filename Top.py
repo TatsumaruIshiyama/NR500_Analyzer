@@ -46,7 +46,15 @@ if reset_btn:
     st.session_state['analyze'] = False
     mode = False
 st.subheader('1. Upload csv')
-st.session_state['data_origin'] = st.file_uploader('Upload csv', accept_multiple_files = True, type = 'csv')
+st.session_state['data_origin'] = st.file_uploader('Limit 500MB in total', accept_multiple_files = True, type = 'csv')
+if st.session_state['data_origin']:
+    total = []
+    for data_origin in st.session_state['data_origin']:
+        size = data_origin.size
+        total.append(size)
+    total = sum(total)
+    if total > 550e6:
+        st.text('File size is too large')
 st.session_state['sampling_rate'], st.session_state['col_name'], st.session_state['col_st'], read_btn = interface.read_form()
 if read_btn:
     interface.read()
