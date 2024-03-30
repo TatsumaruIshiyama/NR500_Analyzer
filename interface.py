@@ -1,9 +1,9 @@
-#%%
+# %%
 import numpy as np
 import pandas as pd
 import streamlit as st
 import wave_extractor_NR500 as ex
-#%%
+# %%
 def read_form():
     with st.form('read'):
         sampling_rate = st.slider(
