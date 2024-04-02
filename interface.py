@@ -150,7 +150,7 @@ def check(file_id):
     st.session_state['id_L'][file_id] = id_L
     st.session_state['id_R'][file_id] = id_R
     st.pyplot(fig)
-    print(id_L)
+    st.text(id_L)
 # %%
 def extract_form():
     with st.form('extract'):
