@@ -1,5 +1,6 @@
 # %%
 import numpy as np
+import pandas as pd
 import streamlit as st
 import wave_extractor_NR500 as ex
 # %%
@@ -33,6 +34,7 @@ def def_session_state():
 # %%
 def reset():
     st.session_state['data_origin'] = []
+    st.session_state['data_origin_sort'] = []
     st.session_state['df_st'] = []
     st.session_state['df_ex'] = []
     st.session_state['filename'] = []
@@ -93,9 +95,17 @@ def read():
     for i in range(len(st.session_state['data_origin'])):   
         filename = st.session_state['data_origin'][i].name.replace('.csv', '')
         st.session_state['filename'].append(filename)
+    df_filename = pd.DataFrame({'filename':st.session_state['filename']})
+    df_filename = df_filename.sort_values('filename')
+    df_filename = df_filename.reset_index(drop = False)
+    for i in range(len(st.session_state['data_origin'])):
+        file_id = df_filename.loc[i, 'index']
+        st.session_state['data_origin_sort'].append(st.session_state['data_origin'][file_id])
+    st.session_state['filename'] = sorted(st.session_state['filename'])
+    for i in range(len(st.session_state['data_origin'])):
         st.session_state['df_st'].append(
             ex.read_standard(
-            st.session_state['data_origin'][i],
+            st.session_state['data_origin_sort'][i],
             st.session_state['col_name'],
             st.session_state['col_st']
             )
@@ -159,9 +169,9 @@ def extract_form():
 # %%
 def extract():
     st.session_state['df_ex'] = []
-    for i in range(len(st.session_state['df_st'])):  
+    for i in range(len(st.session_state['df_st'])):
         df_ex = ex.extract_df(
-            st.session_state['data_origin'][i],
+            st.session_state['data_origin_sort'][i],
             st.session_state['col_name'],
             st.session_state['id_L'][i],
             st.session_state['id_R'][i],
