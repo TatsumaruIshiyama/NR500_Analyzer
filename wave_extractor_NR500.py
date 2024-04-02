@@ -198,6 +198,7 @@ def show_FFT(data, sampling_rate, axis, peak, sensitivity):
         if peak:
             show_peak(ax, freq, amp, sampling_rate, sensitivity, ylim)
         st.pyplot(fig)
+# %%
 def show_filter(data, data_filt, sampling_rate, axis):
     time = (data.index / sampling_rate)
     xlim = time[-1]
