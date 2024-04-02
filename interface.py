@@ -7,6 +7,8 @@ import wave_extractor_NR500 as ex
 def def_session_state():
     if 'data_origin' not in st.session_state:
         st.session_state['data_origin'] = []
+    if 'data_origin_sort' not in st.session_state:
+        st.session_state['data_origin_sort'] = []
     if 'df_st' not in st.session_state:
         st.session_state['df_st'] = []
     if 'df_ex' not in st.session_state:
